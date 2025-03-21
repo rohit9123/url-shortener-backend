@@ -1,27 +1,28 @@
+
 # 🚀 Scalable URL Shortener System
 
 A high-performance, scalable, and highly available URL shortener service built using **Node.js, Express, MongoDB, Redis, and Zookeeper**.
 
 ## 📌 Tech Stack
 
-- **Node.js + Express** – API Server
-- **MongoDB** – Persistent storage for original and shortened URLs
-- **Redis** – Caching layer with LRU eviction
-- **Zookeeper** – Unique short code generation using sequential IDs
-- **Base62 Encoding** – Generates compact 7-character short codes
+- **Node.js + Express** – API Server  
+- **MongoDB Atlas** – Persistent storage for original and shortened URLs  
+- **Redis** – Caching layer with LRU eviction  
+- **Zookeeper** – Unique short code generation using sequential IDs  
+- **Base62 Encoding** – Generates compact 7-character short codes  
 - **Rate Limiting** – Token Bucket Algorithm via Redis
 
 ## 🔧 Features
 
-- ✨ Unique 7-character short URL generation
-- ⚡ Fast redirection using Redis cache
-- 📦 Write-through and read-through caching strategy
-- 🔐 Rate limiting per user/IP (5 links/hour)
-- 📈 Click tracking
-- 🧠 Zookeeper-based distributed ID generation
-- 🗃 MongoDB with index on `shortCode` for fast lookups
-- 🧹 LRU cache eviction in Redis when full
-- 🛡 Spam protection and URL validation
+- ✨ Unique 7-character short URL generation  
+- ⚡ Fast redirection using Redis cache  
+- 📦 Write-through and read-through caching strategy  
+- 🔐 Rate limiting per user/IP (5 links/hour)  
+- 📈 Click tracking  
+- 🧠 Zookeeper-based distributed ID generation  
+- 🗃 MongoDB with index on `shortCode` for fast lookups  
+- 🧹 LRU cache eviction in Redis when full  
+- 🛡 Spam protection and URL validation  
 
 ## 📂 Project Structure
 
@@ -40,11 +41,13 @@ url-shortener/
 ├── utils/
 │   └── base62.js
 ├── config/
-│   └── db.js
-│   └── redis.js
+│   ├── db.js
+│   ├── redis.js
+│   └── zookeeper.js
 ├── app.js
 ├── server.js
-└── .env
+├── .env
+└── docker-compose.yml
 ```
 
 ## 📜 API Endpoints
@@ -70,7 +73,7 @@ url-shortener/
 
 ```
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/urlshortener
+MONGODB_URI=your_mongodb_atlas_connection_string
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 BASE_URL=http://localhost:5000
@@ -78,7 +81,30 @@ RATE_LIMIT=5
 RATE_LIMIT_WINDOW=3600
 ```
 
-## 🏁 Running the Project
+## 🐳 Running with Docker
+
+### Start Redis and Zookeeper via Docker:
+```bash
+docker-compose up -d
+```
+
+### Example `docker-compose.yml`:
+```yaml
+services:
+  redis:
+    image: redis:latest
+    container_name: redis-server
+    ports:
+      - "6379:6379"
+
+  zookeeper:
+    image: zookeeper:latest
+    container_name: zookeeper-server
+    ports:
+      - "2181:2181"
+```
+
+## 🏁 Running the Project Locally
 
 ### 1. Clone the repo
 ```bash
@@ -91,41 +117,41 @@ cd url-shortener
 npm install
 ```
 
-
-
 ### 3. Start the server
 ```bash
 npm run dev
 ```
 
+> Ensure Docker containers for Redis & Zookeeper are running before starting the server.
+
 ## 📈 Scalability & Performance
 
-- Horizontal scaling with Load Balancer
-- MongoDB sharding support
-- Redis replication/failover
-- Stateless API servers
-- Rate limiting to prevent abuse
-- LRU-based cache eviction
+- Horizontal scaling with Load Balancer  
+- MongoDB sharding support  
+- Redis replication/failover  
+- Stateless API servers  
+- Rate limiting to prevent abuse  
+- LRU-based cache eviction  
 
 ## 📚 System Design Highlights
 
-- Zookeeper ensures **globally unique IDs** even in a distributed setup.
-- Redis caching improves **read performance** drastically.
-- Token Bucket Rate Limiting ensures **fair usage**.
-- All short codes are **7-character Base62 encoded** for URL friendliness.
+- Zookeeper ensures **globally unique IDs** even in a distributed setup  
+- Redis caching improves **read performance** drastically  
+- Token Bucket Rate Limiting ensures **fair usage**  
+- All short codes are **7-character Base62 encoded** for URL friendliness  
 
 ## 🔐 Security Considerations
 
-- URL validation using regex
-- IP-based rate limiting
-- Blacklisting malicious domains
+- URL validation using regex  
+- IP-based rate limiting  
+- Blacklisting malicious domains  
 
 ## ✅ Future Enhancements
 
-- User authentication and analytics dashboard
-- Expiry handling and scheduled cleanup
-- QR code generation
-- Custom short code support
+- User authentication and analytics dashboard  
+- Expiry handling and scheduled cleanup  
+- QR code generation  
+- Custom short code support  
 
 ## 🧠 Learn More
 
@@ -136,7 +162,11 @@ npm run dev
 - LRU Cache Strategy  
 
 ## 📄 License
+
 This project is open-source and available under the [MIT License](LICENSE).
 
 ## 👨‍💻 Author
-**Rohit Kumar** — [rohit.kumpan01@gmail.com](mailto:rohit.kumpan01@gmail.com)
+
+**Rohit Kumar**  
+📧 [rohit.kumpan01@gmail.com](mailto:rohit.kumpan01@gmail.com)  
+🌐 [GitHub: @rohit9123](https://github.com/rohit9123)
