@@ -1,36 +1,58 @@
-// config/zookeeper.js
-
+require('dotenv').config();
 const zookeeper = require('node-zookeeper-client');
 
-const zkClient = zookeeper.createClient('localhost:2181');
+const zkConnectionString = process.env.ZOOKEEPER_HOST || 'localhost:2181';
+const zkClient = zookeeper.createClient(zkConnectionString);
 
-zkClient.once('connected', () => {
-  console.log('✅ Connected to Zookeeper');
+zkClient.on('connected', () => {
+  console.log('✅ Zookeeper connected');
 });
 
-zkClient.connect();
+zkClient.on('error', (err) => {
+  console.error('❌ Zookeeper Error:', err);
+});
 
-/**
- * Generates a unique sequential ID using Zookeeper.
- * Creates a node like /url-00000001, /url-00000002, etc.
- */
+
+const connectZookeeper = () => {
+  return new Promise((resolve, reject) => {
+    zkClient.once('connected', () => {
+      console.log('✅ Zookeeper connected');
+      resolve();
+    });
+
+    zkClient.connect();
+
+    // Fallback timeout in case Zookeeper never connects
+    setTimeout(() => {
+      reject(new Error('❌ Zookeeper connection timeout'));
+    }, 10000);
+  });
+};
+
 const generateUniqueId = () => {
+  console.log('⚙️ Calling generateUniqueId...');
   return new Promise((resolve, reject) => {
     const path = '/url-';
 
-    zkClient.create(path, Buffer.from(''), zookeeper.CreateMode.EPHEMERAL_SEQUENTIAL, (err, fullPath) => {
-      if (err) {
-        return reject(err);
-      }
+    zkClient.create(
+      path,
+      Buffer.from(''),
+      zookeeper.CreateMode.EPHEMERAL_SEQUENTIAL,
+      (err, fullPath) => {
+        if (err) {
+          console.error('❌ Error creating node:', err);
+          return reject(err);
+        }
 
-      // Extract numeric part from fullPath (e.g., /url-00000017 => 17)
-      const sequenceId = parseInt(fullPath.replace('/url-', ''), 10);
-      resolve(sequenceId);
-    });
+        const sequenceId = parseInt(fullPath.replace('/url-', ''), 10);
+        resolve(sequenceId);
+      }
+    );
   });
 };
 
 module.exports = {
   zkClient,
+  connectZookeeper,
   generateUniqueId,
 };

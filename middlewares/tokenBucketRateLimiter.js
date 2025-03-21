@@ -1,5 +1,5 @@
 // middlewares/tokenBucketRateLimiter.js
-const redisClient = require('../config/redisClient');
+const redisClient = require('../config/redis');
 
 const MAX_TOKENS = 5;
 const REFILL_INTERVAL_SECONDS = 60 * 12; // 1 token every 12 mins

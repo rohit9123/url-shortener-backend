@@ -8,7 +8,7 @@ const redisClient = require('../config/redis'); // We'll integrate Redis later
 // POST /api/url/shorten
 const shortenUrl = async (req, res) => {
   const { longUrl } = req.body;
-
+  console.log(longUrl)
   if (!longUrl) return res.status(400).json({ message: 'Long URL is required' });
 
   try {
@@ -38,7 +38,7 @@ const shortenUrl = async (req, res) => {
 };
 
 // GET /api/url/:shortCode
-const redirectShortUrl = async (req, res) => {
+const redirectToLongUrl = async (req, res) => {
   const { shortCode } = req.params;
 
   try {

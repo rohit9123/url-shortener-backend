@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:latest
+    container_name: quickcut_redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+
+  zookeeper:
+    image: zookeeper:latest
+    container_name: quickcut_zookeeper
+    ports:
+      - "2181:2181"

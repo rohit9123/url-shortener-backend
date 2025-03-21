@@ -3,9 +3,9 @@ const express = require('express');
 const router = express.Router();
 
 const tokenBucketRateLimiter = require('../middlewares/tokenBucketRateLimiter');
-const { createShortUrl, getLongUrl } = require('../controllers/urls.controller');
+const { shortenUrl, redirectToLongUrl } = require('../controllers/urlController');
 
-router.post('/create', tokenBucketRateLimiter, createShortUrl);
-router.get('/:shortCode', getLongUrl);
+router.post('/create', tokenBucketRateLimiter, shortenUrl);
+router.get('/:shortCode', redirectToLongUrl);
 
 module.exports = router;
