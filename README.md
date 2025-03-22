@@ -24,6 +24,20 @@ A high-performance, scalable, and highly available URL shortener service built u
 - 🧹 LRU cache eviction in Redis when full  
 - 🛡 Spam protection and URL validation  
 
+## ⚙️ Architecture Overview
+
+```
+Client ↔ Backend API (Express)
+           ↓
+   Redis Cache (Rate Limit, Token Bucket)
+           ↓
+   Zookeeper Nodes (ID Generation)
+           ↓
+   MongoDB Atlas (URL storage)
+```
+
+---
+
 ## 📂 Project Structure
 
 ```
@@ -123,6 +137,44 @@ npm run dev
 ```
 
 > Ensure Docker containers for Redis & Zookeeper are running before starting the server.
+
+## 🧠 How Unique ID Generation Works
+
+- Three Zookeeper nodes assigned offset ranges:
+  - Node1: 1000000 - 1999999
+  - Node2: 2000000 - 2999999
+  - Node3: 3000000 - 3999999 (to be added)
+- Random client chosen for ID generation.
+- If one node's sequence exceeds max range, fallback to next node.
+- All IDs are encoded using Base62 for shortness.
+
+---
+
+## 🛡 Rate Limiting
+
+- Token Bucket Algorithm using Redis.
+- Config:
+  - Max Tokens: 10
+  - Refill Rate: 1 token every 10 minutes
+- Based on user IP to prevent abuse.
+
+---
+
+## 🧪 Health Checks
+
+- Redis: Custom `incr` command test
+- Zookeeper: `zkServer.sh status` healthcheck
+
+---
+
+## 📄 Future Improvements
+
+- Frontend UI (React )
+- Analytics Dashboard
+- Custom aliases
+- User authentication & history
+
+---
 
 ## 📈 Scalability & Performance
 
