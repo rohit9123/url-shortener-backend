@@ -1,15 +1,83 @@
-version: '3.8'
+version: '3.9'
 
 services:
+  backend:
+    build: .
+    container_name: url-shortener
+    ports:
+      - "5000:5000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      zookeeper1:
+        condition: service_healthy
+      zookeeper2:
+        condition: service_healthy
+    environment:
+      - ZOOKEEPER_URLS=zookeeper1:2181,zookeeper2:2182
+      - REDIS_HOST=redis
+
   redis:
-    image: redis:latest
-    container_name: quickcut_redis
+    image: redis:alpine
+    container_name: redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
     ports:
       - "6379:6379"
-    command: ["redis-server", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
 
-  zookeeper:
-    image: zookeeper:latest
-    container_name: quickcut_zookeeper
+  zookeeper1:
+    image: zookeeper:3.9
+    container_name: zk1
+    hostname: zookeeper1
     ports:
       - "2181:2181"
+    expose:
+      - "2888"
+      - "3888"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zookeeper1:2888:3888;2181 server.2=zookeeper2:2888:3888;2182
+      ZOO_4LW_COMMANDS_WHITELIST: "*"
+      ZOO_MAX_CLIENT_CNXNS: 100
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - zk1-data:/data
+      - zk1-datalog:/datalog
+
+  zookeeper2:
+    image: zookeeper:3.9
+    container_name: zk2
+    hostname: zookeeper2
+    ports:
+      - "2182:2182"
+    expose:
+      - "2888"
+      - "3888"
+    environment:
+      ZOO_MY_ID: 2
+      ZOO_SERVERS: server.1=zookeeper1:2888:3888;2181 server.2=zookeeper2:2888:3888;2182
+      ZOO_4LW_COMMANDS_WHITELIST: "*"
+      ZOO_MAX_CLIENT_CNXNS: 100
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2182 | grep imok"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - zk2-data:/data
+      - zk2-datalog:/datalog
+
+volumes:
+  zk1-data:
+  zk1-datalog:
+  zk2-data:
+  zk2-datalog:
+
+  

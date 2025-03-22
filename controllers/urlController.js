@@ -2,8 +2,9 @@
 
 const Url = require('../models/Url');
 const { encode } = require('../utils/base62');
-const { generateUniqueId } = require('../config/zookeeper');
+const { generateUniqueId } = require('../services/zookeeperService');
 const redisClient = require('../config/redis'); // We'll integrate Redis later
+const { getFromCache, setToCache } = require('../services/redisService');
 
 // POST /api/url/shorten
 const shortenUrl = async (req, res) => {
@@ -43,25 +44,24 @@ const redirectToLongUrl = async (req, res) => {
 
   try {
     // Step 1: Check Redis Cache
-    const cachedLongUrl = await redisClient.get(shortCode);
-
-    if (cachedLongUrl) {
-      console.log('🔁 Redis Cache HIT');
-      return res.redirect(cachedLongUrl);
+   
+    const cachedUrl = await getFromCache(shortCode);
+    if (cachedUrl) {
+      return res.redirect(cachedUrl.originalUrl);
     }
 
     // Step 2: Check MongoDB if not in cache
-    const urlDoc = await Url.findOne({ shortCode });
 
-    if (!urlDoc) {
-      return res.status(404).json({ message: 'Short URL not found' });
+    const url = await Url.findOne({ shortCode });
+    if (url) {
+      await setToCache(shortCode, url);
+      return res.redirect(url.originalUrl);
     }
 
-    // Step 3: Cache the long URL in Redis
-    await redisClient.set(shortCode, urlDoc.longUrl);
-    console.log('💾 Redis Cache MISS — Data fetched from DB and cached');
 
-    return res.redirect(urlDoc.longUrl);
+    if (!url) {
+      return res.status(404).json({ message: 'Short URL not found' });
+    }
 
   } catch (error) {
     console.error('❌ Error in redirectShortUrl:', error);
