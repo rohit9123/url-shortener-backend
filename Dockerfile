@@ -7,5 +7,6 @@ COPY . .
 EXPOSE 8080
 
 # Start the app
-CMD ["npx", "nodemon", "server.js"]
+CMD ["node", "server.js"]
+
 
