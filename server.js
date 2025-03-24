@@ -44,7 +44,8 @@ async function initializeServices() {
 
 function setupRoutes() {
   app.use(express.json());
-  app.use(tokenBucketRateLimiter);
+  // app.use(tokenBucketRateLimiter);
+  app.get('/',(req,res) => res.send('heellp'))
   app.use('/api', require('./routes/urlRoutes'));
 }
 
