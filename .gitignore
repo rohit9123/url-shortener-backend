@@ -6,6 +6,7 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+commit.ps1
 
 # Logs
 logs/
