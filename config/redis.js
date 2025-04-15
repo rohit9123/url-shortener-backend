@@ -3,9 +3,11 @@ const { createClient } = require('redis');
 class RedisClient {
   constructor() {
     this.client = createClient({
-      url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+      url: process.env.REDIS_URL, // Use full Upstash URL from environment
       socket: {
-        connectTimeout: 30000,
+        tls: true, // Required for Upstash
+        rejectUnauthorized: false, // For self-signed certs (use true in production)
+        connectTimeout: 10000,
         reconnectStrategy: (retries) => {
           console.log(`♻️ Redis reconnecting (attempt ${retries + 1})`);
           return Math.min(retries * 500, 5000);
@@ -13,52 +15,71 @@ class RedisClient {
       }
     });
 
-    this.connected = false;
+    this.isConnected = false;
     
     this.client
-      .on('connect', () => console.log('🔌 Redis connection established'))
-      .on('ready', () => {
-        this.connected = true;
-        console.log('✅ Redis ready');
+      .on('connect', () => {
+        console.log('🔌 Redis connection established');
+        this.isConnected = true;
       })
-      .on('error', (err) => console.error('❌ Redis error:', err))
+      .on('ready', () => console.log('✅ Redis ready'))
+      .on('error', (err) => {
+        console.error('❌ Redis error:', err);
+        this.isConnected = false;
+      })
       .on('end', () => {
-        this.connected = false;
         console.log('🔴 Redis connection closed');
+        this.isConnected = false;
       });
+
+    // Auto-connect on initialization
+    this.connect().catch(console.error);
   }
 
-  async waitForConnection() {
-    if (this.connected) return;
-    
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('Redis connection timeout'));
-      }, 30000);
-
-      this.client.connect()
-        .then(() => {
-          clearTimeout(timeout);
-          resolve();
-        })
-        .catch(reject);
-    });
+  async connect() {
+    if (!this.client.isOpen) {
+      await this.client.connect();
+    }
   }
 
   async get(key) {
-    await this.waitForConnection();
-    return this.client.get(key);
+    try {
+      return await this.client.get(key);
+    } catch (error) {
+      console.error('GET error:', error);
+      throw error;
+    }
   }
 
-  async set(key, value) {
-    await this.waitForConnection();
-    return this.client.set(key, value);
+  async set(key, value, options = {}) {
+    try {
+      const { EX: expires } = options;
+      return await this.client.set(key, value, {
+        ...(expires && { EX: expires })
+      });
+    } catch (error) {
+      console.error('SET error:', error);
+      throw error;
+    }
+  }
+
+  async healthCheck() {
+    try {
+      await this.client.ping();
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   async quit() {
     if (this.client.isOpen) {
       await this.client.quit();
     }
+  }
+
+  get status() {
+    return this.isConnected ? 'connected' : 'disconnected';
   }
 }
 
