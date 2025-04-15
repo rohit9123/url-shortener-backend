@@ -20,7 +20,7 @@ async function initializeServices() {
       console.log(`🔄 Initialization attempt ${attempt}/${maxRetries}`);
       
       console.log('🔌 Connecting to Redis...');
-      await redisClient.waitForConnection();
+      await redisClient.connect();
       
       console.log('🔗 Connecting to Zookeeper...');
       await zookeeperClient.connect();
