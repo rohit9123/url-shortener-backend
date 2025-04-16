@@ -1,7 +1,7 @@
 const zookeeper = require('node-zookeeper-client');
 const zookeeperClient = require('../config/zookeeper'); 
 
-const COUNTER_PATHS = ['/counter/node1', '/counter/node2'];
+const COUNTER_PATHS = ['/counter/node1', '/counter/node2','/counter/node3'];
 const MAX_SEQUENCE = 999999;
 
 async function ensureZNodeExists(client, path, initialData = '0') {

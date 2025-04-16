@@ -51,17 +51,15 @@ class RedisClient {
     }
   }
 
+  
   async set(key, value, options = {}) {
-    try {
-      const { EX: expires } = options;
-      return await this.client.set(key, value, {
-        ...(expires && { EX: expires })
-      });
-    } catch (error) {
-      console.error('SET error:', error);
-      throw error;
-    }
+  try {
+    return await this.client.set(key, value, options);
+  } catch (error) {
+    console.error('SET error:', error);
+    throw error;
   }
+}	
 
   async healthCheck() {
     try {

@@ -26,7 +26,7 @@ async function initializeServices() {
       await zookeeperClient.connect();
       
       console.log('📂 Initializing ZNodes...');
-      await initializeZNodes();
+      await initializeZNodes();      
 
       console.log('connecting database');
       require('./config/db')();

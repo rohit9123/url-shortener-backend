@@ -9,26 +9,28 @@ const { getFromCache, setToCache } = require('../services/redisService');
 // POST /api/url/shorten
 const shortenUrl = async (req, res) => {
   const { longUrl } = req.body;
-  console.log(longUrl)
+  
   if (!longUrl) return res.status(400).json({ message: 'Long URL is required' });
 
   try {
-    // Step 1: Generate Unique ID from Zookeeper
     const uniqueId = await generateUniqueId();
-
-    // Step 2: Encode to Base62 7-char string
     const shortCode = encode(uniqueId);
 
-    // Step 3: Save in MongoDB
-    const newUrl = new Url({ longUrl, shortCode });
+    const newUrl = new Url({ 
+      longUrl, 
+      shortCode,
+      createdAt: new Date(),
+      clicks: 0
+    });
+
     await newUrl.save();
 
-    // Optional: Save in Redis cache
-    // await redisClient.set(shortCode, longUrl);
+    // Store raw URL string in cache
+    await setToCache(shortCode, longUrl);
 
     return res.status(201).json({
       shortCode,
-      shortUrl: `${process.env.BASE_URL}/${shortCode}`,
+      shortUrl: `http://13.235.33.102:8080/api/${shortCode}`,
       longUrl,
     });
 
@@ -39,35 +41,35 @@ const shortenUrl = async (req, res) => {
 };
 
 // GET /api/url/:shortCode
+// controllers/urlController.js
 const redirectToLongUrl = async (req, res) => {
   const { shortCode } = req.params;
 
   try {
-    // Step 1: Check Redis Cache
-   
+    // Check Redis Cache
     const cachedUrl = await getFromCache(shortCode);
     if (cachedUrl) {
-      return res.redirect(cachedUrl.originalUrl);
+      return res.redirect(cachedUrl); // Use direct URL string
     }
 
-    // Step 2: Check MongoDB if not in cache
-
+    // Check MongoDB if not in cache
     const url = await Url.findOne({ shortCode });
-    if (url) {
-      await setToCache(shortCode, url);
-      return res.redirect(url.originalUrl);
-    }
-
-
     if (!url) {
       return res.status(404).json({ message: 'Short URL not found' });
     }
+
+    // Update cache with raw URL string
+    await setToCache(shortCode, url.longUrl);
+    return res.redirect(url.longUrl);
 
   } catch (error) {
     console.error('❌ Error in redirectShortUrl:', error);
     return res.status(500).json({ message: 'Server error' });
   }
 };
+
+
+ 
 
 
 module.exports = {

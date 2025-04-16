@@ -13,8 +13,6 @@ services:
     networks:
       - app-net
     depends_on:
-      redis:
-        condition: service_healthy
       zookeeper1:
         condition: service_healthy
       zookeeper2:
@@ -23,26 +21,10 @@ services:
         condition: service_healthy
     environment:
       - NODE_ENV=production
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
       - ZOOKEEPER_URLS=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181
+      - ZOOKEEPER_BASE_PATH=/url-shortener
+      - REDIS_URL=${REDIS_URL}
       - MONGODB_URI=${MONGODB_URI}
-    restart: unless-stopped
-
-  redis:
-    image: redis:7.2-alpine
-    container_name: redis
-    command: redis-server --save 60 1 --appendonly yes
-    networks:
-      - app-net
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    volumes:
-      - redis_data:/data
     restart: unless-stopped
 
   zookeeper1:
@@ -115,7 +97,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  redis_data:
   zk1-data:
   zk1-log:
   zk2-data:
